@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team Generator + Toss</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 18px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #222;
+      margin: 6px 0 16px;
+      font-size: 22px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: white;
+      padding: 18px;
+      border-radius: 14px;
+      box-shadow: 0px 6px 15px rgba(0,0,0,0.08);
+    }
+
+    .section {
+      margin-bottom: 18px;
+      padding: 14px;
+      border: 2px solid #eee;
+      border-radius: 12px;
+    }
+
+    .section h2 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      color: #111;
+    }
+
+    label { font-weight: bold; }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 16px; /* ✅ better for mobile (no zoom issue) */
+      outline: none;
+      transition: 0.2s;
+    }
+
+    input:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 0 3px rgba(0,123,255,0.15);
+    }
+
+    /* ✅ Duplicate highlight */
+    .dup {
+      border: 2px solid #dc3545 !important;
+      box-shadow: 0 0 0 3px rgba(220,53,69,0.15) !important;
+    }
+
+    .error-text {
+      color: #dc3545;
+      font-weight: bold;
+      font-size: 13px;
+      margin: 8px 0 0;
+      display: none;
+    }
+
+    button {
+      padding: 12px 14px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px; /* ✅ easier to tap */
+      font-weight: bold;
+      margin: 6px 0;
+      width: auto;
+      min-height: 44px; /* ✅ mobile tap size */
+    }
+
+    .btn-primary { background: #007bff; color: white; }
+    .btn-success { background: #28a745; color: white; }
+    .btn-warning { background: #ff9800; color: white; }
+    .btn-danger  { background: #dc3545; color: white; }
+
+    .note { font-size: 13px; color: #555; margin: 6px 0 0; }
+
+    .actions-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    /* ✅ Players entry layout */
+    .player-entry-wrap {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 14px;
+      margin-top: 10px;
+    }
+
+    /* ✅ History panel */
+    .history-box {
+      border: 2px dashed #cfe3ff;
+      border-radius: 12px;
+      padding: 12px;
+      background: #f7fbff;
+      min-height: 120px;
+    }
+
+    .history-box h4 {
+      margin: 0 0 10px;
+      color: #0056b3;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .history-actions { display: flex; gap: 8px; }
+
+    .mini-btn {
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1px solid #cfe3ff;
+      background: white;
+      cursor: pointer;
+      min-height: 38px;
+    }
+
+    /* ✅ Chips: sized by name */
+    .chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:9px 12px;
+      border-radius:999px;
+      background:#fff;
+      border:1px solid #cfe3ff;
+      cursor:pointer;
+      user-select:none;
+      transition:0.15s;
+      width:fit-content;
+      max-width:100%;
+    }
+
+    .chip:hover{
+      transform: translateY(-1px);
+      box-shadow: 0px 6px 15px rgba(0,0,0,0.08);
+    }
+
+    .chip-name{
+      font-weight:700;
+      color:#0b2a4a;
+      font-size:13px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      max-width: 170px;
+    }
+
+    .chip-x{
+      flex:0 0 auto;
+      width:24px;
+      height:24px;
+      border-radius:50%;
+      border:none;
+      background:#dc3545;
+      color:#fff;
+      font-weight:900;
+      font-size:16px;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      line-height:1;
+      padding:0;
+    }
+
+    .empty-history { font-size: 13px; color: #555; margin: 0; }
+
+    /* ✅ Team output */
+    .teams {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .team-box {
+      border: 2px solid #007bff;
+      padding: 14px;
+      border-radius: 12px;
+      background: #f0f7ff;
+    }
+
+    .team-box h3 {
+      margin: 0 0 8px;
+      color: #007bff;
+      font-size: 17px;
+    }
+
+    ul { padding-left: 18px; margin: 0; }
+
+    /* ✅ Toss */
+    .coin-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .coin {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      position: relative;
+      transform-style: preserve-3d;
+    }
+
+    .coin-face {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      position: absolute;
+      backface-visibility: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 20px;
+      font-weight: bold;
+      color: white;
+      box-shadow: 0px 8px 20px rgba(0,0,0,0.25);
+    }
+
+    .coin-head { background: linear-gradient(135deg, #007bff, #00bfff); }
+    .coin-tail { background: linear-gradient(135deg, #ff9800, #ff5722); transform: rotateY(180deg); }
+
+    @keyframes flipToHead {
+      from { transform: rotateY(0deg); }
+      to   { transform: rotateY(1800deg); }
+    }
+    @keyframes flipToTail {
+      from { transform: rotateY(0deg); }
+      to   { transform: rotateY(1980deg); }
+    }
+
+    .flip-head { animation: flipToHead 2s ease-in-out forwards; }
+    .flip-tail { animation: flipToTail 2s ease-in-out forwards; }
+
+    .result {
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 6px;
+      color: #333;
+      text-align: center;
+    }
+
+    /* ✅ Mobile Optimizations */
+    @media (max-width: 700px) {
+      body { padding: 12px; }
+      .container { padding: 14px; border-radius: 12px; }
+      h1 { font-size: 20px; }
+
+      .player-entry-wrap { grid-template-columns: 1fr; }
+
+      /* buttons full width on mobile */
+      button { width: 100%; }
+
+      .actions-row { flex-direction: column; align-items: stretch; }
+
+      .coin, .coin-face {
+        width: 95px;
+        height: 95px;
+      }
+      .coin-face { font-size: 18px; }
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Team Generator + Toss</h1>
+
+  <div class="container">
+
+    <!-- SECTION 1 -->
+    <div class="section">
+      <h2>1) Players Setup</h2>
+
+      <label>Total Number of Players</label>
+      <input type="number" id="totalPlayers" min="1" placeholder="Enter total players (example: 10)" />
+      <button class="btn-primary" id="btnPlayerNext" onclick="generatePlayerInputs()">Next: Enter Player Names</button>
+
+      <p id="playerDupError" class="error-text">❌ Duplicate player name found! Please enter unique names.</p>
+
+      <!-- player input + history -->
+      <div class="player-entry-wrap">
+        <div id="playerInputs"></div>
+
+        <div class="history-box">
+          <h4>
+            Previously Entered Names
+            <span class="history-actions">
+              <button class="mini-btn" onclick="refreshHistoryUI()">↻ Refresh</button>
+              <button class="mini-btn" onclick="clearHistory()">Clear</button>
+            </span>
+          </h4>
+
+          <div id="historyChips" class="chips"></div>
+          <p id="emptyHistory" class="empty-history">No saved names yet.</p>
+          <p class="note" style="margin-top:10px;">Tip: click a name to fill in the selected input box.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2 -->
+    <div class="section">
+      <h2>2) Teams Setup</h2>
+
+      <label>Number of Teams</label>
+      <input type="number" id="totalTeams" min="1" placeholder="Enter number of teams (example: 2)" />
+      <button class="btn-primary" id="btnTeamNext" onclick="generateTeamInputs()">Next: Enter Team Names</button>
+
+      <div id="teamInputs"></div>
+    </div>
+
+    <!-- SECTION 3 -->
+    <div class="section">
+      <h2>3) Random Team Allocation</h2>
+
+      <div class="actions-row">
+        <button class="btn-success" id="btnAllocate" onclick="allocateTeams()">Allocate Players Randomly</button>
+
+        <button class="btn-warning" id="shuffleBtn" onclick="shuffleTeams()" style="display:none;">
+          Shuffle Players Again 🔁
+        </button>
+      </div>
+
+      <p class="note">Players will be randomly distributed equally as possible.</p>
+      <div class="teams" id="teamsOutput"></div>
+    </div>
+
+    <!-- SECTION 4 -->
+    <div class="section">
+      <h2>4) Toss</h2>
+
+      <button class="btn-warning" id="tossBtn" onclick="doTossAnimated()">Toss 🪙</button>
+
+      <div class="coin-container">
+        <div class="coin" id="coin">
+          <div class="coin-face coin-head">HEAD</div>
+          <div class="coin-face coin-tail">TAIL</div>
+        </div>
+
+        <div class="result" id="tossResult"></div>
+      </div>
+    </div>
+
+    <!-- RESET -->
+    <div class="section">
+      <h2>Reset Full App</h2>
+      <button class="btn-danger" onclick="resetAll()">Reset Everything</button>
+      <p class="note">This will clear players, teams, allocation, and toss.</p>
+    </div>
+
+  </div>
+
+  <script>
+    let allocatedTeams = [];
+    let savedPlayers = [];
+    let savedTeamNames = [];
+    let isFlipping = false;
+
+    let activePlayerInput = null;
+    const HISTORY_KEY = "teamApp_playerNameHistory_v1";
+
+    function normalizeName(s) {
+      return (s || "").trim().toLowerCase().replace(/\s+/g, " ");
+    }
+    function cleanText(s) {
+      return (s || "").trim().replace(/\s+/g, " ");
+    }
+
+    function loadHistory() {
+      try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
+      catch { return []; }
+    }
+    function saveHistory(list) {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+    }
+    function addToHistory(name) {
+      const clean = cleanText(name);
+      if (!clean) return;
+
+      const list = loadHistory();
+      const exists = list.some(x => normalizeName(x) === normalizeName(clean));
+      if (exists) return;
+
+      list.unshift(clean);
+      saveHistory(list.slice(0, 60));
+    }
+    function deleteFromHistory(name) {
+      const list = loadHistory().filter(x => normalizeName(x) !== normalizeName(name));
+      saveHistory(list);
+      refreshHistoryUI();
+    }
+    function clearHistory() {
+      saveHistory([]);
+      refreshHistoryUI();
+    }
+
+    function refreshHistoryUI() {
+      const list = loadHistory();
+      const chips = document.getElementById("historyChips");
+      const empty = document.getElementById("emptyHistory");
+
+      chips.innerHTML = "";
+
+      if (!list.length) {
+        empty.style.display = "block";
+        return;
+      }
+      empty.style.display = "none";
+
+      list.forEach(n => {
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.title = "Click to fill";
+
+        chip.addEventListener("click", () => {
+          if (!activePlayerInput) {
+            alert("Click/select a player input first, then click a saved name.");
+            return;
+          }
+          activePlayerInput.value = n;
+          validatePlayerDuplicates();
+          activePlayerInput.focus();
+        });
+
+        const span = document.createElement("span");
+        span.className = "chip-name";
+        span.textContent = n;
+
+        const x = document.createElement("button");
+        x.className = "chip-x";
+        x.type = "button";
+        x.textContent = "×";
+        x.addEventListener("click", (e) => {
+          e.stopPropagation();
+          deleteFromHistory(n);
+        });
+
+        chip.appendChild(span);
+        chip.appendChild(x);
+        chips.appendChild(chip);
+      });
+    }
+
+    function validatePlayerDuplicates() {
+      const inputs = [...document.querySelectorAll('#playerInputs input')];
+      const err = document.getElementById("playerDupError");
+
+      inputs.forEach(inp => inp.classList.remove("dup"));
+      err.style.display = "none";
+
+      let map = new Map();
+      inputs.forEach(inp => {
+        const val = normalizeName(inp.value);
+        if (!val) return;
+        if (!map.has(val)) map.set(val, []);
+        map.get(val).push(inp);
+      });
+
+      let hasDup = false;
+      for (const [, list] of map.entries()) {
+        if (list.length > 1) {
+          hasDup = true;
+          list.forEach(i => i.classList.add("dup"));
+        }
+      }
+
+      if (hasDup) err.style.display = "block";
+      return !hasDup;
+    }
+
+    function generatePlayerInputs() {
+      const total = parseInt(document.getElementById("totalPlayers").value);
+      const container = document.getElementById("playerInputs");
+      container.innerHTML = "";
+
+      document.getElementById("playerDupError").style.display = "none";
+      activePlayerInput = null;
+
+      if (!total || total <= 0) return alert("Please enter valid total number of players!");
+
+      for (let i = 1; i <= total; i++) {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.placeholder = "Enter Player " + i + " name";
+        input.id = "player_" + i;
+
+        input.addEventListener("input", validatePlayerDuplicates);
+        input.addEventListener("blur", validatePlayerDuplicates);
+
+        input.addEventListener("focus", () => activePlayerInput = input);
+        input.addEventListener("click", () => activePlayerInput = input);
+
+        input.addEventListener("blur", () => {
+          const v = input.value.trim();
+          if (v) {
+            addToHistory(v);
+            refreshHistoryUI();
+          }
+        });
+
+        input.addEventListener("keydown", (e) => handleEnterKey(e));
+
+        container.appendChild(input);
+      }
+
+      refreshHistoryUI();
+      const first = document.querySelector('#playerInputs input');
+      if (first) first.focus();
+    }
+
+    function generateTeamInputs() {
+      const total = parseInt(document.getElementById("totalTeams").value);
+      const container = document.getElementById("teamInputs");
+      container.innerHTML = "";
+
+      if (!total || total <= 0) return alert("Please enter valid number of teams!");
+
+      for (let i = 1; i <= total; i++) {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.placeholder = "Enter Team " + i + " name";
+        input.id = "team_" + i;
+        input.addEventListener("keydown", (e) => handleEnterKey(e));
+        container.appendChild(input);
+      }
+
+      const first = document.querySelector('#teamInputs input');
+      if (first) first.focus();
+    }
+
+    function buildAllocation(players, teamNames) {
+      const totalTeams = teamNames.length;
+      const shuffled = [...players].sort(() => Math.random() - 0.5);
+
+      allocatedTeams = teamNames.map(name => ({ name, players: [] }));
+
+      shuffled.forEach((player, idx) => {
+        allocatedTeams[idx % totalTeams].players.push(player);
+      });
+
+      displayTeams();
+    }
+
+    function allocateTeams() {
+      const totalPlayers = parseInt(document.getElementById("totalPlayers").value);
+      const totalTeams = parseInt(document.getElementById("totalTeams").value);
+
+      if (!totalPlayers || !totalTeams) return alert("Please fill both Players and Teams setup!");
+      if (!validatePlayerDuplicates()) return alert("❌ Duplicate player names found! Fix before allocating.");
+
+      savedPlayers = [];
+      for (let i = 1; i <= totalPlayers; i++) {
+        const name = document.getElementById("player_" + i)?.value.trim();
+        if (!name) return alert("Enter all player names!");
+        savedPlayers.push(cleanText(name));
+      }
+
+      savedPlayers.forEach(addToHistory);
+      refreshHistoryUI();
+
+      savedTeamNames = [];
+      for (let i = 1; i <= totalTeams; i++) {
+        const name = document.getElementById("team_" + i)?.value.trim();
+        if (!name) return alert("Enter all team names!");
+        savedTeamNames.push(cleanText(name));
+      }
+
+      buildAllocation(savedPlayers, savedTeamNames);
+      document.getElementById("shuffleBtn").style.display = "inline-block";
+    }
+
+    function shuffleTeams() {
+      if (!savedPlayers.length || !savedTeamNames.length) return;
+      buildAllocation(savedPlayers, savedTeamNames);
+    }
+
+    function displayTeams() {
+      const output = document.getElementById("teamsOutput");
+      output.innerHTML = "";
+
+      allocatedTeams.forEach(team => {
+        const box = document.createElement("div");
+        box.className = "team-box";
+        box.innerHTML = `
+          <h3>${team.name}</h3>
+          <ul>${team.players.map(p => `<li>${p}</li>`).join("")}</ul>
+        `;
+        output.appendChild(box);
+      });
+    }
+
+    function doTossAnimated() {
+      if (isFlipping) return;
+      isFlipping = true;
+
+      const coin = document.getElementById("coin");
+      const result = document.getElementById("tossResult");
+      const btn = document.getElementById("tossBtn");
+
+      btn.disabled = true;
+      btn.style.opacity = "0.7";
+
+      result.innerHTML = "Flipping coin... 🪙";
+
+      coin.classList.remove("flip-head", "flip-tail");
+      void coin.offsetWidth;
+
+      const toss = Math.random() < 0.5 ? "Head" : "Tail";
+      if (toss === "Head") coin.classList.add("flip-head");
+      else coin.classList.add("flip-tail");
+
+      setTimeout(() => {
+        result.innerHTML = `Toss Result: <b>${toss}</b>`;
+        isFlipping = false;
+        btn.disabled = false;
+        btn.style.opacity = "1";
+      }, 2000);
+    }
+
+    function handleEnterKey(e) {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+
+      const el = e.target;
+      const id = el.id || "";
+
+      if (id === "totalPlayers") {
+        document.getElementById("btnPlayerNext").click();
+        return;
+      }
+      if (id === "totalTeams") {
+        document.getElementById("btnTeamNext").click();
+        return;
+      }
+
+      if (id.startsWith("player_")) {
+        const inputs = [...document.querySelectorAll("#playerInputs input")];
+        const idx = inputs.indexOf(el);
+        if (idx >= 0 && idx < inputs.length - 1) inputs[idx + 1].focus();
+        else document.getElementById("btnAllocate").click();
+        return;
+      }
+
+      if (id.startsWith("team_")) {
+        const inputs = [...document.querySelectorAll("#teamInputs input")];
+        const idx = inputs.indexOf(el);
+        if (idx >= 0 && idx < inputs.length - 1) inputs[idx + 1].focus();
+        else document.getElementById("btnAllocate").click();
+        return;
+      }
+    }
+
+    function resetAll() {
+      allocatedTeams = [];
+      savedPlayers = [];
+      savedTeamNames = [];
+
+      document.getElementById("totalPlayers").value = "";
+      document.getElementById("totalTeams").value = "";
+
+      document.getElementById("playerInputs").innerHTML = "";
+      document.getElementById("teamInputs").innerHTML = "";
+      document.getElementById("teamsOutput").innerHTML = "";
+
+      document.getElementById("shuffleBtn").style.display = "none";
+      document.getElementById("playerDupError").style.display = "none";
+      document.getElementById("tossResult").innerHTML = "";
+
+      const coin = document.getElementById("coin");
+      coin.classList.remove("flip-head", "flip-tail");
+
+      refreshHistoryUI();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    document.getElementById("totalPlayers").addEventListener("keydown", handleEnterKey);
+    document.getElementById("totalTeams").addEventListener("keydown", handleEnterKey);
+
+    refreshHistoryUI();
+  </script>
+</body>
+</html>
