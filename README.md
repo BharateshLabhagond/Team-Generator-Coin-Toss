@@ -1,4 +1,5 @@
 #Team Generator + Coin Toss
+
 Team Generator + Coin Toss web app that helps you quickly create teams for games.
 You just enter the number of players, type their names, enter the number of teams, and the app will randomly split players into teams.
 
